@@ -1,39 +1,56 @@
 <?php
-if( isset($_POST["uName"]) && isset($_POST["uPassword"]) )
+if( isset($_POST["patientSSN"]) && isset($_POST["patientName"]) && isset($_POST["patientPassword"])&& isset($_POST["status"]))
 {
-    $servername = "localhost";
-    $username = "root";
-    $password = "";
-    $dbname = "hospitaldb";
-
-    $conn = new mysqli($servername, $username, $password, $dbname);
-
-    if ($conn->connect_error) {
-        die("Connection Error: " . $conn->connect_error);
-    }
-
-    $conn->set_charset("utf8");
-
-    $query = "select username from admin where username = '".$_POST["uName"]."' and password = '".$_POST["uPassword"]."'";
-    $result = $conn->query($query);
-
-    $row = $result->fetch_assoc();
-
-    if($row['username'] == null)
-    {
-        $message = "Incorrect entry, try again";
-    }
-    else
-    {
+    $status = $_POST["status"];
+    if ($status == "patient"){
+        $patientSSN = $_POST["patientSSN"];
+        $patientName = $_POST["patientName"];
+        $patientPassword = $_POST["patientPassword"];
         session_start();
-        $_SESSION['activeUser'] = $row['username'];
+        $_SESSION['patientssn'] = $patientSSN;
+        $_SESSION['patientname'] = $patientName;
+        $activePatientInfo = array (
+            'patientssn' => $_SESSION['patientssn'],
+            'patientname' => $_SESSION['patientname']
+        );
 
-        header("location: admin.php");
+        $_SESSION['activePatient'][] = $activePatientInfo;
+
+        header("location: index.php");
     }
-}
-else
-{
-    $message = "";
+    else{
+        $patientSSN = $_POST["patientSSN"];
+        $patientPassword = $_POST["patientPassword"];
+
+        $servername = "localhost";
+        $username = "root";
+        $password = "";
+        $dbname = "hospitaldb";
+
+        $conn = new mysqli($servername, $username, $password, $dbname);
+
+        if ($conn->connect_error) {
+            die("Connection Error: " . $conn->connect_error);
+        }
+
+        $conn->set_charset("utf8");
+
+        $query = "select username from admin where username = '".$patientSSN."' and password = '".$patientPassword."'";
+        $result = $conn->query($query);
+
+        $row = $result->fetch_assoc();
+
+        if($row['username'] == null)
+        {
+            //$message = "Incorrect entry, try again";
+        }
+        else
+        {
+            session_start();
+            $_SESSION['activeUser'] = $row['username'];
+            header("location: admin.php");
+        }
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -49,7 +66,6 @@ else
 
     <title>MHRS LOGIN</title>
 
-    <!-- Bootstrap core CSS -->
     <link href="dist/css/bootstrap.min.css" rel="stylesheet">
 
     <link href="assets/css/ie10-viewport-bug-workaround.css" rel="stylesheet">
@@ -73,10 +89,93 @@ else
                 <input type="checkbox" value="remember-me"> Remember me
             </label>
         </div>
-        <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+        <div id="asd">
+
+        </div>
+        <button class="btn btn-lg btn-primary btn-block" type="button" id="signInButton">Sign in</button>
+        <button type="submit" id="directing" style="visibility: hidden"></button>
+        <input type="text" id="patientInfossn" style="visibility: hidden" name="patientSSN"/>
+        <input type="text" id="patientInfoPassword" style="visibility: hidden" name="patientPassword"/>
+        <input type="text" id="patientInfoStatus" style="visibility: hidden" name="status"/>
+        <input type="text" id="patientInfoName" style="visibility: hidden" name="patientName"/>
     </form>
 
 </div>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<script>
+    $(document).ready(function() { // when DOM is ready, this will be executed
 
+        $("#signInButton").click(function(e) { // click event for "btnCallSrvc"
+
+            var patientSSN = $("#inputEmail").val(); // get date
+            var patientPassword = $("#inputPassword").val();
+            if(patientSSN == "") {
+                alert("Enter country code!");
+                $("#inputEmail").focus();
+                return;
+            }
+            var retType = "json"; // get reply format
+            $.ajax({ // start an ajax POST
+                type	: "post",
+                url		: "patientPhp.php",
+                data	:  {
+                    "patientSSN"	: patientSSN,
+                    "patientPassword" : patientPassword,
+                    "format": retType,
+                },
+                success : function(reply) { // when ajax executed successfully
+                    if(retType == "json") {
+                        var crappyJSON = JSON.stringify(reply);
+                        var jsonData = JSON.parse(crappyJSON);
+						
+                        if(jsonData.Patient.length > 0)
+                        {
+                            var patient = jsonData.Patient[0];
+                            var patientssn = patient.PatientSSN;
+                            var patientName = patient.PatientName;
+
+                            $("#patientInfossn").val(patientssn);
+                            $("#patientInfoPassword").val(patientPassword);
+                            $("#patientInfoName").val(patientName);
+                            $("#patientInfoStatus").val("patient");
+                            $("#directing").trigger("click");
+                        }
+                        else
+                        {
+							console.log(crappyJSON);
+                            $("#patientInfossn").val(patientSSN);
+                            $("#patientInfoPassword").val(patientPassword);
+                            $("#patientInfoStatus").val("adminOrNot");
+                            $("#directing").trigger("click");
+                        }
+                    }
+                    else {
+                        //$("#asd").html( new XMLSerializer().serializeToString(reply) );
+                        var x = reply.getElementsByTagName('PatientSSN')[0];
+                        if(x != null){
+                            var y = x.childNodes[0];
+                            var patientssn = y.nodeValue;
+                            $("#patientInfossn").val(patientssn);
+                            $("#patientInfoPassword").val(patientPassword);
+                            $("#patientInfoStatus").val("patient");
+                            $("#directing").trigger("click");
+                        }
+                        else{
+                            $("#patientInfossn").val(patientSSN);
+                            $("#patientInfoPassword").val(patientPassword);
+                            $("#patientInfoStatus").val("adminOrNot");
+                            $("#directing").trigger("click");
+                        }
+                    }
+                },
+                error   : function(err) { // some unknown error happened
+                    console.log(err);
+                    alert(" There is an error! Please try again. " + err);
+                }
+            });
+        });
+    });
+</script>
 </body>
+
 </html>

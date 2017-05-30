@@ -50,7 +50,7 @@ body {
 }
 #container > #mainContainerStep3{
     width: 800px;
-    height: 300px;
+    height: 650px;
     padding: 20px;
     background-color: bisque;
     margin:auto;
@@ -63,7 +63,7 @@ body {
     padding: 20px;
     background-color: bisque;
     margin:auto;
-    margin-top: -300px;
+    margin-top: -650px;
     visibility: hidden;
 }
 #container > #mainContainerStep5{
@@ -204,9 +204,14 @@ body {
     box-shadow: 0 5px #666;
     transform: translateY(4px);
 }
-.timeButton:target{
-    background-color: yellow;
+.timeButton:focus {
+    background: linear-gradient(#152B40, #152B40);
+    color: white
 }
+
 #generalBranchList{
+    margin-left: 35%;
+}
+#addBranch{
     margin-left: 35%;
 }

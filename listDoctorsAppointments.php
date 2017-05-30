@@ -1,6 +1,6 @@
 <?php
 if(isset($_POST['doctorid'])) {
-    // connect DB
+
     $servername = "localhost";
     $username = "root";
     $password = "";
@@ -15,18 +15,19 @@ if(isset($_POST['doctorid'])) {
     $conn->set_charset("utf8");
 
     // read POST variables
-    $format = "xml"; // xml is the default
+    $format = "json"; // xml is the default
     $doctorID = $_POST['doctorid'];
-
+    $currentDate = date("Y-m-d");
     // prepare, bind and execute SQL statement
-    $stmt = $conn->prepare("SELECT a.ID,a.PatientName,a.PatientSSN,ai.date,ai.time,g.name,s.name FROM appointmentinfo AS ai,appointment as a,subbranch as s,generalbranch as g WHERE a.DoctorID=? and a.Appointment_InfoID=ai.ID and a.SubBranchID=s.ID and s.generalID=g.ID ORDER BY ai.date");
-    $stmt->bind_param("i", $doctorID); // si: string integer
+    $stmt = $conn->prepare("SELECT a.ID,a.PatientName,a.PatientSSN,ai.date,ai.time,g.name,s.name FROM appointmentinfo AS ai,appointment as a,subbranch as s,generalbranch as g WHERE a.DoctorID=? and a.Appointment_InfoID=ai.ID and a.SubBranchID=s.ID and s.generalID=g.ID and ai.date >= '$currentDate'ORDER BY ai.date");
+    $stmt->bind_param("s", $doctorID); // si: string integer
     $stmt->execute();
     $stmt->bind_result($id,$pname,$pssn,$date,$time,$gname,$sname);
-
     $appointments = array();
     while ($stmt->fetch()) {
-        array_push( $appointments, array("AppointmentID"=>$id, "PatientName"=>$pname, "PatientSSN"=>$pssn,"Date"=>$date,"Time"=>$time,"BranchName"=>$gname,"SubbranchName"=>$sname) );
+        $starttime = strtotime($time);
+        $endtime = date("H:i:s", strtotime('+10 minutes', $starttime));
+        array_push( $appointments, array("AppointmentID"=>$id, "PatientName"=>$pname, "PatientSSN"=>$pssn,"Date"=>$date,"Time"=>$time,"EndTime"=>$endtime,"BranchName"=>$gname,"SubbranchName"=>$sname) );
     }
 
     $stmt->close(); // close statement

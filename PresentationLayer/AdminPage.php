@@ -3,8 +3,9 @@ require_once ("LogicLayer/AppointmentManager.php");
 require_once ("LogicLayer/Appointment_InfoManager.php");
 
 $errorMeesage = "";
-if(isset($_POST["id"])){
-    if(isset($_POST["patientName"])&&isset($_POST["doctName"])&&isset($_POST["branchName"])&&isset($_POST["appDate"])&&isset($_POST["appTime"])&&isset($_POST["appInfoId"])){
+if(isset($_POST["id"])&&isset($_POST["operation"])){
+    $operationType = $_POST["operation"];
+    if($operationType=="edit"&&isset($_POST["patientName"])&&isset($_POST["doctName"])&&isset($_POST["branchName"])&&isset($_POST["appDate"])&&isset($_POST["appTime"])&&isset($_POST["appInfoId"])){
         $id=$_POST["id"];
         $patientName = $_POST["patientName"];
         $doctorName = $_POST["doctName"];
@@ -31,6 +32,11 @@ if(isset($_POST["id"])){
         }
     }
 }
+if(isset($_POST['logout'])){
+    session_start();
+    unset($_SESSION["activeUser"]);  // where $_SESSION["nome"] is your own variable. if you do not have one use only this as follow **session_unset();**
+    header("Location: index.php");
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -43,6 +49,12 @@ if(isset($_POST["id"])){
 <body>
 <div id="container">
     <div id="headerContainer">
+        <form action="" method="POST">
+            <button type="submit" class="btn btn-default btn-sm" style="margin-left: 110%" id="logOutButton">
+                <span class="glyphicon glyphicon-log-out"></span> Log out
+            </button>
+            <input type="hidden" name="logout" value="LoggedOut"/>
+        </form>
         <a href="http://www.saglik.gov.tr" target="_blank" class="logo"></a>
         <span class="owner">DEUCENG HOSPITAL</span>
         <span class="title">APPOINTMENT SYSTEM</span>
@@ -96,6 +108,7 @@ if(isset($_POST["id"])){
             <input type="hidden" id="date" name="appDate"/>
             <input type="hidden" id="time" name="appTime"/>
             <input type="hidden" id="appInfo" name="appInfoId"/>
+            <input type="hidden" id="operationType" name="operation"/>
         </form>
     </div>
 </div>
@@ -107,8 +120,8 @@ if(isset($_POST["id"])){
         $(".adminDel").click(function() {
             var $row = $(this).closest("tr");    // Find the row
             var id = $row.find(".id").text();
-          //  var retType = "xml";// Find the text
             $("#appId").val(id);
+            $("#operationType").val("delete");
 
         });
         $(".adminEdit").click(function() {
@@ -139,6 +152,7 @@ if(isset($_POST["id"])){
                 $("#date").val(appDate);
                 $("#time").val(appTime);
                 $("#appInfo").val(appInfoId);
+                $("#operationType").val("edit");
                 $("button[name='edit']").prop("type", "submit");
                 //inputların değerleri değiştirilecek!! POST işlemleri...
             }

@@ -15,11 +15,11 @@ if(isset($_POST['SSN'])) {
     $conn->set_charset("utf8");
 
     // read POST variables
-    $format = "xml"; // xml is the default
+    $format = "json"; // xml is the default
     $ssn = $_POST['SSN'];
-
+    $currentDate = date("Y-m-d");
     // prepare, bind and execute SQL statement
-    $stmt = $conn->prepare("SELECT a.ID,a.PatientName,a.PatientSSN,ai.date,ai.time,g.name,s.name,a.DoctorName FROM appointmentinfo AS ai,appointment as a,subbranch as s,generalbranch as g WHERE a.PatientSSN=? and a.Appointment_InfoID=ai.ID and a.SubBranchID=s.ID and s.generalID=g.ID ORDER BY ai.date");
+    $stmt = $conn->prepare("SELECT a.ID,a.PatientName,a.PatientSSN,ai.date,ai.time,g.name,s.name,a.DoctorName FROM appointmentinfo AS ai,appointment as a,subbranch as s,generalbranch as g WHERE a.PatientSSN=? and a.Appointment_InfoID=ai.ID and a.SubBranchID=s.ID and s.generalID=g.ID and ai.date >= '$currentDate' ORDER BY ai.date");
     $stmt->bind_param("s", $ssn); // si: string integer
     $stmt->execute();
     $stmt->bind_result($id,$pname,$pssn,$date,$time,$gname,$sname,$dname);

@@ -1,6 +1,5 @@
-
 <?php
-if(isset($_POST['branch'])) {
+if(isset($_POST['patientSSN'])&&isset($_POST['patientPassword'])) {
     // connect DB
     $servername = "localhost";
     $username = "root";
@@ -17,24 +16,25 @@ if(isset($_POST['branch'])) {
 
     // read POST variables
     $format = "json"; // xml is the default
-    $branch = $_POST['branch'];
+    $patientSSN = $_POST['patientSSN'];
+    $patientPassword = $_POST['patientPassword'];
 
     // prepare, bind and execute SQL statement
-    $stmt = $conn->prepare("SELECT tc,name,surname FROM `doctor` WHERE 1");
-  //  $stmt->bind_param("ss", $patientSSN,$patientPassword); // si: string integer
+    $stmt = $conn->prepare("SELECT ssn,password FROM `patient` WHERE ssn=? and password=?");
+    $stmt->bind_param("ss", $patientSSN,$patientPassword); // si: string integer
     $stmt->execute();
-    $stmt->bind_result($doctTC,$doctName,$doctSurname);
+    $stmt->bind_result($patSSN,$patPassword);
 
     $patients = array();
     while ($stmt->fetch()) {
-        array_push( $patients, array("TC"=>$doctTC, "Name"=>$doctName,"Surname"=>$doctSurname) );
+        array_push( $patients, array("PatientSSN"=>$patSSN, "PatientPassword"=>$patPassword, "PatientName"=>"Mesut") );
     }
     $stmt->close(); // close statement
 
 
     if($format == 'json') { // JSON output
         header('Content-type: application/json');
-        echo json_encode(array("Doctors"=>$patients));
+        echo json_encode(array('Patient'=>$patients));
     }
     else { // XML output
         header('Content-type: text/xml');
